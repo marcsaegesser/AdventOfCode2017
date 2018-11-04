@@ -21,12 +21,22 @@ object Day6 {
     helper(initial, (at+1)%v.size, toDist)
   }
 
-  def solvePuzzle(input: Vector[Int]): Int = {
+  def untilCycle(input: Vector[Int]): Int = {
     def runCycle(accum: List[Vector[Int]], v: Vector[Int]): List[Vector[Int]] =
       if(accum.contains(v)) accum
-      else runCycle(v :: accum, redistribute(v))
+      else                  runCycle(v :: accum, redistribute(v))
 
     runCycle(List.empty[Vector[Int]], input).size
+  }
+
+  def cycleLength(input: Vector[Int]): Int = {
+    def runCycle(accum: List[Vector[Int]], v: Vector[Int]): (List[Vector[Int]], Vector[Int]) =
+      if(accum.contains(v)) (accum, v)
+      else                  runCycle(v :: accum, redistribute(v))
+
+    val repeated = runCycle(List.empty[Vector[Int]], input)
+    val cycle = runCycle(List.empty[Vector[Int]], repeated._2)
+    cycle._1.size
   }
 
   def mkVector(s: String): Vector[Int] = s.split("\\s+").map(_.toInt).toVector
