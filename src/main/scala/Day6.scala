@@ -1,10 +1,6 @@
 package org.saegesser
 
 object Day6 {
-  def rebalance(v: Vector[Int]): Vector[Int] = {
-    ???
-  }
-
   def chooseBiggest(v: Vector[Int]): Int =
     v.zipWithIndex
       .foldLeft((0, 0)) { case ((m, mi), (a, i)) => if(a > m) (a, i ) else (m, mi) }
