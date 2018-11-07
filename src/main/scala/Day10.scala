@@ -28,6 +28,9 @@ object Day10 {
     }
   }
 
+  def generateHash(input: String): String =
+    generateHash(mkInput(input))
+
   def generateHash(input: List[Int]): String = {
     def runRound(state: HashState, input: List[Int]): HashState =
       input.foldLeft(state)(runCycle)
