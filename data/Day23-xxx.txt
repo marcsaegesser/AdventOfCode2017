@@ -1,0 +1,46 @@
+set b 57
+set c b
+jnz a 2
+jnz 1 5
+mul b 100
+sub b -100000
+set c b
+sub c -17000
+set f 1   ; TOP
+set d 2
+set e b   ; LOOP 1
+sub e d
+sub e d
+jnz e 2   ;d != b/2
+jnz 1 24  ;d=b/2  GOTO DONE
+sub e 1
+jnz e 2   ;d != b/2 + 1
+jnz 1 21  ;d=b/2+1  GOTO DONE
+set e d
+set g d   ; LOOP 2
+mul g e
+sub g b
+jnz g 3
+set f 0
+jnz 1 14
+set g b
+sub g e
+sub g d
+jnz g 2
+jnz 1 5
+sub e -1
+set g e
+sub g b
+jnz g -14  ; GOTO LOOP2
+sub d -1
+set g d
+sub g b
+jnz g -27  ; GOTO LOOP1
+jnz f 2    ;DONE
+sub h -1
+set g b
+sub g c
+jnz g 2
+jnz 1 3
+sub b -17
+jnz 1 -37  ; GOTO TOP

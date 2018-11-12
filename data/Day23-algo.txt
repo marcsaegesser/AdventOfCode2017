@@ -1,0 +1,33 @@
+// Original
+def fubar(b, c, h) {
+  f = 1
+  for(d=2;d != b; d++) {
+    for(e=2; e != b; e++) {
+      if(e*d == b) {
+        f = 0
+        goto DONE
+      }
+    }
+  }
+DONE:
+  if(f == 0) h = h+1
+  if(b == c) then h
+             else fubar(b+17, c, h)
+}
+
+// Slightly improved
+def fubar(b, c, h) {
+  f = 1
+  for(d=2;d != b; d++) {
+    for(e=d; e != b; e++) {
+      if(e*d == b) {
+        f = 0
+        goto DONE
+      } else if(e+d == b) break
+    }
+  }
+DONE:
+  if(f == 0) h = h+1
+  if(b == c) then h
+             else fubar(b+17, c, h)
+}
