@@ -51,6 +51,11 @@ object Day20 {
     else x(0)
   }
 
+  def runSim1N(num: Int, ps: Vector[Particle]): Vector[Particle] = {
+    if(ps.size == 1 || num==0) ps
+    else runSim1N(num-1, updateParticles(ps))
+  }
+
   def runSimN(num: Int, ps: Vector[Particle]): Vector[Particle] = {
     if(ps.size == 1 || num==0) ps
     else runSimN(num-1, removeCollisions(updateParticles(ps)))
