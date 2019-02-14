@@ -1,4 +1,4 @@
-package org.saegesser
+package advent
 
 object Day14 {
   case class Segment(used: Boolean, region: Int = 0) {

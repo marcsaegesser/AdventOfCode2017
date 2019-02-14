@@ -1,82 +1,4 @@
-package advent
-
-object Day7 {
-  sealed trait Tree[A] { def value: A; def note: Int }
-  case   class LeafNode[A](value: A, note: Int)                      extends Tree[A]
-  case   class Node[A](value: A, note: Int, children: List[Tree[A]]) extends Tree[A]
-
-  case class Program(name: String,  weight: Int)
-
-  case class RawData(p: Program, cs: List[String])
-  case class Environment(rawData: Map[String, RawData], forest: Map[String, Tree[Program]])
-
-
-  val pr = """(\w+) \((\d+)\)(?: -> (.*))*""".r
-  def parseLine(string: String): RawData =
-    string match {
-      case pr(n, w, null) => RawData(Program(n, w.toInt), List.empty[String])
-      case pr(n, w, c)    => RawData(Program(n, w.toInt), c.split(",").toList.map(_.trim))
-    }
-
-  def parseInput(input: String): Map[String, RawData] =
-    input.lines
-      .map(parseLine)
-      .map(d => (d.p.name, d))
-      .toMap
-
-  def buildTree(rawData: Map[String, RawData]): Tree[Program] = {
-    def buildTreeForName(name: String, env: Environment): Environment =
-      env match {
-        case Environment(rawData, forest) =>
-          rawData.get(name) match {
-            case Some(RawData(p, Nil)) => Environment(rawData - name, forest + (name -> LeafNode(p, p.weight)))
-            case Some(RawData(p, cs))  =>
-              val env2 = cs.foldLeft(env) { case (e, n) => buildTreeForName(n, e) }
-              val kids = cs.map(n => env2.forest(n))
-              val kidsWeight = kids.map(_.note).sum
-              val newRawData = (env2.rawData -- cs) - name
-              val newForest  = (env2.forest -- cs) + (name -> Node(p, kidsWeight + p.weight, kids))
-              Environment(newRawData, newForest)
-            case None => env
-          }
-      }
-
-    def helper(env: Environment): Environment =
-      if(env.rawData.isEmpty) env
-      else                    helper(buildTreeForName(env.rawData.head._1, env))
-
-    helper(Environment(rawData, Map.empty[String, Tree[Program]])).forest.head._2
-  }
-
-  def findImbalance(tree: Tree[Program], target: Int): (String, Int) = {
-    tree match {
-      case Node(v, n, cs) if cs.size >= 3 =>
-        val x = cs.sortBy(_.note)
-        if(x(0).note == x(1).note)
-          if(x(0).note == x.last.note) (v.name, target - n)
-          else                        findImbalance(x.last, x(0).note)
-        else findImbalance(x(0), x(1).note)
-      case Node(v, n, cs) if cs.size == 2 => ???
-      case Node(v, n, cs) if cs.size == 1 => ???
-      case LeafNode(v, n)                => ???
-    }
-  }
-
-  val smallData = """pbga (66)
-xhth (57)
-ebii (61)
-havc (66)
-ktlj (57)
-fwft (72) -> ktlj, cntj, xhth
-qoyq (66)
-padx (45) -> pbga, havc, qoyq
-tknk (41) -> ugml, padx, fwft
-jptl (61)
-ugml (68) -> gyxo, ebii, jptl
-gyxo (61)
-cntj (57)"""
-
-  val puzzleData = """qgcmjz (87) -> skzkx, pzkofch
+qgcmjz (87) -> skzkx, pzkofch
 remwlv (18)
 ngrmq (80) -> cluej, ywrxbgi, saznyj
 omqech (119) -> asqih, chotekn
@@ -1587,5 +1509,4 @@ csfsklt (24)
 eqoiqq (75)
 nlkvr (56)
 ywrxbgi (84)
-gkakcm (84)"""
-}
+gkakcm (84)

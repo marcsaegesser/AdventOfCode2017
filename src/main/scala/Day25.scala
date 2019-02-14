@@ -1,4 +1,4 @@
-package org.saegesser
+package advent
 
 object Day25 {
   type StateName = String
@@ -15,8 +15,18 @@ object Day25 {
 
   type States = Map[StateName, State]
 
-  case class Tape(c: Long, tape: Map[Long, Unit])
-  def emptyTape = Tape(0, Map.empty[Long, Unit])
+  case class Tape(c: Long, tape: Set[Long])
+  def emptyTape = Tape(0, Set.empty[Long])
+
+  def day25(): Unit = {
+    val machine = parseFile(inputFile)
+    println(s"Day25.part1 = ${part1(machine)}")
+  }
+
+  def part1(machine: TuringMachine): Int = {
+    val result = runMachine(machine)
+    result.tape.tape.size
+  }
 
   def runAction(a: Action, t: Tape): (Tape, StateName) =
     a match { case Action(w, m, n) =>
@@ -39,18 +49,18 @@ object Day25 {
 
   def runMachine(m: TuringMachine): TuringMachine = {
     if(m.diagCount == 0) m
-    else runMachine(stepMachine(m))
+    else                runMachine(stepMachine(m))
   }
 
   def write(t: Tape, v: Int): Tape =
     t match { case Tape(c, tape) =>
       v match {
         case 0 => t.copy(tape= tape-c)
-        case 1 => t.copy(tape= tape+((c, ())))
+        case 1 => t.copy(tape= tape+c)
       }
     }
 
-  def read(t: Tape): Int = if(t.tape.isDefinedAt(t.c)) 1 else 0
+  def read(t: Tape): Int = if(t.tape.contains(t.c)) 1 else 0
 
   def move(t: Tape, d: Direction): Tape =
     d match {
@@ -84,6 +94,7 @@ object Day25 {
       case "left"  => Left
       case _       => throw new Exception(s"Invalid direction $s")
     }
+
   def parseState(lines: Vector[String]): State = {
     val stateNameRegex(n)  = lines(0).trim
     val writeRegex(v0)     = lines(2).trim
@@ -114,4 +125,6 @@ object Day25 {
 
     TuringMachine(n, c, emptyTape, states)
   }
+
+  val inputFile = "data/Day25.txt"
 }

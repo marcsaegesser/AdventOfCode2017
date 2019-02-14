@@ -1,42 +1,47 @@
-package org.saegesser
-
-import scala.io._
+package advent
 
 object Day16 {
 
   type Dancers = Vector[Char]
   type Dance = List[Move]
 
+  def day16(): Unit = {
+    val dance = loadFile(inputFile)
+    println(s"Day16.part1 = ${part1(initialDancers, dance)}")
+    println(s"Day16.part2 = ${part2(initialDancers, dance)}")
+  }
+
+  def part1(dancers: Dancers, d: Dance): String =
+    dance(dancers, d).mkString
+
+  def part2(dancers: Dancers, d: Dance): String = {
+    val cycleLength = findCycle(dancers, d)
+    val remainingDances = 1000000000 % cycleLength
+    (1 to remainingDances).foldLeft(dancers) { case (ds, _) => dance(ds, d) }.mkString
+  }
+
   sealed trait Move
   case class Spin(x: Int)                extends Move
   case class Exchange(x: Int, y: Int)      extends Move
   case class Partner(a: Char, b: Char) extends Move
 
-  def move(dancers: Dancers, move: Move): Dancers =
-    move match {
-      case Spin(x)        =>
-        val (f, b) = dancers.splitAt(dancers.size-x)
-        b ++ f
-      case Exchange(x, y) =>
-        val a = dancers(x)
-        dancers.updated(x, dancers(y)).updated(y, a)
-      case Partner(a, b)  =>
-        val x = dancers.indexOf(a)
-        val y = dancers.indexOf(b)
+  def move(dancers: Dancers, move: Move): Dancers = {
+    def swap(ds: Dancers, x: Int, y: Int): Dancers = {
         val c = dancers(x)
         dancers.updated(x, dancers(y)).updated(y, c)
     }
 
-  def dance(dancers: Dancers, dance: Dance): Dancers = {
-    dance.foldLeft(dancers)(move)
+    move match {
+      case Spin(x)        =>
+        val (f, b) = dancers.splitAt(dancers.size-x)
+        b ++ f
+      case Exchange(x, y) => swap(dancers, x, y)
+      case Partner(a, b)  => swap(dancers, dancers.indexOf(a), dancers.indexOf(b))
+    }
   }
 
-  def danceAgain(dancers: Dancers, d: Dance, count: Long): Dancers = {
-    def helper(remaining: Long, ds: Dancers): Dancers =
-      if(remaining == 0) ds
-      else              helper(remaining-1, dance(ds, d))
-
-    helper(count, dancers)
+  def dance(dancers: Dancers, dance: Dance): Dancers = {
+    dance.foldLeft(dancers)(move)
   }
 
   def findCycle(dancers: Dancers, d: Dance): Int = {
@@ -50,41 +55,25 @@ object Day16 {
   }
 
 
-  def processFile(dancers: Dancers, f: String): Dancers = {
-    case class State(dancers: Dancers, buf: String)
-    Source.fromFile(f)
-      .foldLeft(State(dancers, "")) { case s@(State(d,  b), c) =>
-        println(s"$s")
-        if(c == ',')             State(move(d, parseMove(b.trim)), "")
-        else if(c.isWhitespace) s._1
-        else                    State(d, b + c)
-      }
-    .dancers
-  }
-
-  def parseFile(f: String): Dance =
-    Source.fromFile(f).mkString.split(",").map(s => parseMove(s.trim)).toList
-
-  def parseSpin(s: String): Spin =
-    Spin(s.drop(1).toInt)
-
-  def parseExchange(s: String): Exchange = {
-    val fields = s.drop(1).split("/")
-    Exchange(fields(0).toInt, fields(1).toInt)
-  }
-
-  def parsePartner(s: String): Partner = {
-    val fields = s.drop(1).split("/")
-    Partner(fields(0).head, fields(1).head)
-  }
+  val parseSpin     = """s(\d+)""".r
+  val parseExchange = """x(\d+)/(\d+)""".r
+  val parsePartner  = """p(\w)/(\w)""".r
 
   def parseMove(s: String): Move =
-    s.head match {
-      case 's' => parseSpin(s)
-      case 'x' => parseExchange(s)
-      case 'p' => parsePartner(s)
-      case _   => throw new Exception(s"Bad input $s")
+    s match {
+      case parseSpin(x)        => Spin(x.toInt)
+      case parseExchange(a, b) => Exchange(a.toInt, b.toInt)
+      case parsePartner(a, b)  => Partner(a.head, b.head)
+      case _                   => throw new Exception(s"Invalid move '$s'")
     }
 
+  def loadFile(f: String): Dance =
+    io.Source.fromFile(f)
+      .getLines().take(1).mkString
+      .split(",")
+      .map(parseMove)
+      .toList
+
+  val inputFile = "data/Day16.txt"
   val initialDancers = "abcdefghijklmnop".toVector
 }

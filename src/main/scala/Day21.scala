@@ -1,4 +1,4 @@
-package org.saegesser
+package advent
 
 object Day21 {
   type Rules = Map[String, String]

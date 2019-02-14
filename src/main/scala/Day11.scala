@@ -1,6 +1,4 @@
-package org.saegesser
-
-import scala.io._
+package advent
 
 object Day11 {
   type Dir = Int
@@ -11,51 +9,30 @@ object Day11 {
   val SW = 4
   val NW = 5
 
+  // Combine two directions, wrapping around the hexagon
   def dirPlus(a: Dir, b: Int): Dir = (a + b) % 6
 
-  case class PathState(steps: Map[Dir, Int], stepCount: Int) {
+  case class PathState(steps: Map[Dir, Int]) {
+    def stepCount: Int = steps.values.sum
     def stepCountDir(dir: Dir): Int = steps.getOrElse(dir, 0)
   }
 
-  def cancelOpposite(state: PathState, dir: Dir): PathState = {
-    val dir2 = dirPlus(dir, 3)
-    val changes =
-      (state.stepCountDir(dir), state.stepCountDir(dir2)) match {
-        case (a, 0)          => (List(), 0)
-        case (0, b)          => (List(), 0)
-        case (a, b) if a == b => (List((dir -> 0),     (dir2 -> 0))    , -2*a)
-        case (a, b) if a < b => (List((dir -> 0),     (dir2 -> (b-a))), -2*a)
-        case (a, b)          => (List((dir -> (a-b)), (dir2 -> 0))    , -2*b)
-      }
-    PathState(state.steps ++ changes._1, state.stepCount + changes._2)
+  def day11(): Unit = {
+    val input = loadData(inputFile)
+    println(s"Day11.part1 = ${part1(input)}")
+    println(s"Day11.part2 = ${part2(input)}")
   }
 
-  def reduceAdjacent(state: PathState, dir: Dir): PathState = {
-    val dir2 = dirPlus(dir, 2)
-    val dir3 = dirPlus(dir, 1)
-    val changes =
-      (state.stepCountDir(dir), state.stepCountDir(dir2), state.stepCountDir(dir3)) match {
-        case (a, 0, _)          => (List(), 0)
-        case (0, b, _)          => (List(), 0)
-        case (a, b, c) if a == b => (List((dir -> 0)    , (dir2 -> 0)    , (dir3 -> (c+a))), -a)
-        case (a, b, c) if a < b => (List((dir -> 0)    , (dir2 -> (b-a)), (dir3 -> (c+a))), -a)
-        case (a, b, c)          => (List((dir -> (a-b)), (dir2 -> 0)    , (dir3 -> (c+b))), -b)
-      }
-    PathState(state.steps ++ changes._1, state.stepCount + changes._2)
+  def part1(input: List[Dir]): Int = {
+    minimumPath(mkState(input)).stepCount
   }
 
-  val reduceAll =
-    ((0 to 2).map(d => cancelOpposite(_: PathState, d)) ++ (0 to 5).map(d => reduceAdjacent(_: PathState, d))).reduce(_ compose _)
-
-  def minimumPath(state: PathState): PathState = {
-    def helper(state: PathState, prevSize: Int): PathState = {
-      val s = reduceAll(state)
-      if(s.stepCount == state.stepCount) s
-      else helper(s, s.stepCount)
-    }
-
-    helper(state, state.stepCount)
+  def part2(input: List[Dir]): Int = {
+    furthest(input)
   }
+
+  def minimumPath(state: PathState): PathState =
+    reduceAll(state)
 
   def furthest(input: List[Dir]): Int = {
     def helper(dirs: Stream[List[Dir]], f: Int): Int = {
@@ -67,6 +44,52 @@ object Day11 {
 
     helper(input.inits.toStream, 0)
   }
+
+  /** Cancel steps on opposite hexagonal directions.
+    *
+    * For example, if the state contains 3 N steps and 2 S steps
+    * the result should be a single N step.
+    */
+  def cancelOpposite(dir: Dir)(state: PathState): PathState = {
+    val dir2 = dirPlus(dir, 3)
+    val changes =
+      (state.stepCountDir(dir), state.stepCountDir(dir2)) match {
+        case (_, 0)           => List()
+        case (0, _)           => List()
+        case (a, b) if a >= b  => List((dir -> (a-b)), (dir2 -> 0))
+        case (a, b)           => List((dir -> 0),     (dir2 -> (b-a)))
+
+      }
+    PathState(state.steps ++ changes)
+  }
+
+  /** Cancel steps 'adjacent' steps.
+    *
+    * For example one N step and one SE step reduce to a single NE
+    * step.
+    */
+  def reduceAdjacent(dir: Dir)(state: PathState): PathState = {
+    val dir2 = dirPlus(dir, 2)
+    val dir3 = dirPlus(dir, 1)
+    val changes =
+      (state.stepCountDir(dir), state.stepCountDir(dir2), state.stepCountDir(dir3)) match {
+        case (_, 0, _)           => List()
+        case (0, _, _)           => List()
+        case (a, b, c) if a >= b  => List((dir -> (a-b)), (dir2 -> 0)    , (dir3 -> (c+b)))
+        case (a, b, c)           => List((dir -> 0)    , (dir2 -> (b-a)), (dir3 -> (c+a)))
+      }
+    PathState(state.steps ++ changes)
+  }
+
+  /** Apply all reductions to the given PathState
+    */
+  val reduceAll: PathState => PathState =
+    (
+      (N to NW).map(d => reduceAdjacent(d)(_)) ++   // Cancel all adjacent directions
+      (N to SE).map(d => cancelOpposite(d)(_))      // Cancel all opposite directions
+    ).reduce(_ compose _)                           // Compose everything into a single function
+
+
 
   def mkDir(s: String): Dir =
     s match {
@@ -92,20 +115,16 @@ object Day11 {
 
   def mkState(steps: List[Dir]): PathState = {
     val ss = steps.groupBy(d => d).mapValues(_.size)
-    PathState(ss, ss.values.sum)
+    PathState(ss)
   }
 
-  def parseInput(input: String): PathState = {
-    val steps = input.split(",").map(s => mkDir(s.trim)).groupBy(d => d).mapValues(_.size)
-    PathState(steps, steps.values.sum)
-  }
+  val inputFile = "data/Day11.txt"
 
-  def parseDirs(input: String): List[Dir] =
-    input.split(",").map(s => mkDir(s.trim)).toList
-
-  def loadFile(f: String): String = {
-    Source.fromFile(f).toList.mkString
-  }
+  def loadData(f: String): List[Dir] =
+    io.Source.fromFile(f)
+      .getLines
+      .flatMap(_.split(",").map(mkDir))
+      .toList
 
 
   def mkString(state: PathState): String = {

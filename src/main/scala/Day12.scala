@@ -1,4 +1,4 @@
-package org.saegesser
+package advent
 
 import scala.io._
 

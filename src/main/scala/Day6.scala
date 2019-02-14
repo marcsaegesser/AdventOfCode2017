@@ -1,4 +1,4 @@
-package org.saegesser
+package advent
 
 object Day6 {
   def chooseBiggest(v: Vector[Int]): Int =

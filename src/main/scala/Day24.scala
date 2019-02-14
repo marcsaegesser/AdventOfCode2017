@@ -1,4 +1,6 @@
-package org.saegesser
+package advent
+
+import scala.annotation._
 
 object Day24 {
   case class Component(id: Int, p0: Int, p1: Int) {
@@ -15,6 +17,24 @@ object Day24 {
 
   case class State(bridge: Bridge, available: List[Component])
 
+  def mkState(cs: List[Component]): State =
+    State(initialBridge, cs)
+
+  def day24(): Unit = {
+    val components = parseFile(inputFile)
+    println(s"Day24.part1 = ${part1(components)}")
+    println(s"Day24.part2 = ${part2(components)}")
+  }
+
+  def part1(components: List[Component]): Int = {
+    evalStrength(mkState(components))
+  }
+
+  def part2(components: List[Component]): Int = {
+    val b = evalLengthStrength(mkState(components))
+    bridgeStrength(b)
+  }
+
   def partitionFits(cs: List[Component], pinCount: Int): (List[Component], List[Component]) =
     cs.partition(c => c.hasPort(pinCount))
 
@@ -27,7 +47,7 @@ object Day24 {
   def bridgesFrom(state: State): List[State] = {
     state match { case State(b, a) =>
       val (fits, rest) = partitionFits(a, b.availPins)
-      fits.map(c => State(addBridgeComponent(b, c), rest ++ fits.filterNot(_.id == c.id)))
+      fits.map(c => State(addBridgeComponent(b, c), a.filterNot(_.id == c.id)))
     }
   }
 
@@ -45,15 +65,7 @@ object Day24 {
       else             next.map(evalLengthStrength).sorted.head
     }
 
-  def evalF[T](state: State, f: State => T): List[T] =
-    state match { case State(b, a) =>
-      val next = bridgesFrom(state)
-      if(next.isEmpty) List(f(state))
-      else             next.map(s => evalF(s, f)).flatten
-    }
-
   val initialBridge = Bridge(List.empty[Component], 0)
-
 
   val componentRegex = """(\d+)/(\d+)""".r
   def parseComponent(id: Int, s: String): Component = {
@@ -69,4 +81,6 @@ object Day24 {
       .map{ case (l, i) => parseComponent(i, l) }
       .toList
   }
+
+  val inputFile = "data/Day24.txt"
 }

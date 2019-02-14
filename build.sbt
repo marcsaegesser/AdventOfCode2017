@@ -21,9 +21,9 @@ lazy val advent2017 = (project in file("."))
     scalacOptions in (Test, console) ~= (_.filterNot(_ == "-Xlint")),
 
     libraryDependencies ++= Seq(
-      "org.scalatest"              %% "scalatest"                      % "3.0.0"   % "test",
-      "org.scalacheck"             %% "scalacheck"                     % "1.13.4"  % "test"
+      "org.scalatest"              %% "scalatest"   % "3.0.0"   % "test",
+      "org.scalacheck"             %% "scalacheck"  % "1.13.4"  % "test"
     ),
 
-    initialCommands := "import org.saegesser._"
+    initialCommands := "import advent._"
   )

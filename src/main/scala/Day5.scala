@@ -1,4 +1,4 @@
-package org.saegesser
+package advent
 
 object Day5 {
   sealed trait MachineState

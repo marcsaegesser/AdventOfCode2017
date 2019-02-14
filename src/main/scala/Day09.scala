@@ -1,14 +1,26 @@
-package org.saegesser
+package advent
 
-import scala.io._
-
-object Day9 {
+object Day09 {
   case class ParserState(depth: Int, inGarbage: Boolean, inCancel: Boolean, score: Int, count: Int)
 
   val initialState = ParserState(0, false, false, 0, 0)
 
-  val begGrp: Char = 0x7b
-  val endGrp: Char = 0x7d
+  def day09(): Unit = {
+    val s = loadFile(inputFile)
+    println(s"Day09.part1 = ${part1(s)}")
+    println(s"Day09.part2 = ${part2(s)}")
+  }
+
+  def part1(input: String): Int = {
+    parseStream(input).score
+  }
+
+  def part2(input: String): Int = {
+    parseStream(input).count
+  }
+
+  val begGrp = 0x7b.toChar
+  val endGrp = 0x7d.toChar
   val begGbg = '<'
   val endGbg = '>'
   val cancel = '!'
@@ -30,8 +42,9 @@ object Day9 {
     stream.foldLeft(initialState){ case (s, c) => parseChar(c, s) }
   }
 
-  def parseFile(f: String): Iterator[ParserState] = {
-    val source = Source.fromFile(f)
-    source.getLines().map(parseStream)
+  def loadFile(f: String): String = {
+    io.Source.fromFile(f).getLines().mkString
   }
+
+  val inputFile = "data/Day9.txt"
 }
